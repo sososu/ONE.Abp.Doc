@@ -10,6 +10,6 @@
 而无需花费大量时间和精力在框架的选择、配置和集成上。
 
 
-[GitHub](https://github.com/sososu/ONEAdmin)   [Get Started](index)
+[GitHub](https://github.com/sososu/ONEAbp)   [Get Started](index)
 
 ![](media/seaside.jpg)
