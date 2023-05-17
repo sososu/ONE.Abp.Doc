@@ -1,4 +1,5 @@
 #
+
 # **快速开始**
 
 首先,如果你没有安装[ONEABP CLI](https://docs.abp.io/zh-Hans/abp/latest/CLI),请先安装它:
@@ -52,11 +53,7 @@ ONEABP.CLI在ABP.CLI基础上增加了两个模板
     }
 ```
 
-
-
 *注意：base模板和micro模板已经引用该模块*
-
-
 
 # **数据权限管理**
 
@@ -122,3 +119,76 @@ ONEABP.CLI在ABP.CLI基础上增加了两个模板
 # **管理设置**
 
 待完善
+
+# **分页查询**
+
+查询应该是开发中比较高频的使用，ONE.Abp提供了简单快捷的查询实现方式
+
+1.接口层引用ONE.Abp.Pagination.Contracts
+
+     [DependsOn( typeof(AbpPaginationContractsModule) )]
+
+2.应用层引用ONE.Abp.Pagination
+
+     [DependsOn( typeof(AbpPaginationModule) )]
+
+> *注意：使用模板创建项目自带了分页引用*
+
+## **定义请求参数类**
+
+       public class SampleQueryInput:PagedQuery
+        {
+            [Query(Compare =ONE.Abp.Shared.QueryCompare.Like)] 
+            public string? Name { get; set; }
+
+            [Query("CreationTime", Compare = ONE.Abp.Shared.QueryCompare.GreaterThanOrEqual)]
+            [Query(Compare = ONE.Abp.Shared.QueryCompare.Like)]
+            public DateTime? Start { get; set; }
+
+            [Query("CreationTime", Compare = ONE.Abp.Shared.QueryCompare.LessThan)]
+            public DateTime? End { get; set; }
+
+
+            [Query(Compare = ONE.Abp.Shared.QueryCompare.Equal)]
+            public int? Value { get; set; } 
+        }
+
+### **要点：**
+
+*   参数类要继承PagedQuery
+*   定义可空类型表示值为空在查询时忽略该参数条件
+*   QueryAttribute特性
+
+    > *PropertyPath属性表示映射的字段名，如果参数名跟字段名一致可以不填*
+    >
+    > *Compare属性表示比较方式，该枚举值覆盖了大多数通用的比较方式。*
+*   参数条件之间默认是与运算，如果需要采用或运算，比如 Name跟Value是或运算，那么则使用OrGroup属性，如下示例：
+
+        public class SampleQueryInput:PagedQuery
+        {
+            [Query(Compare =ONE.Abp.Shared.QueryCompare.Like,OrGroup ="cc")] 
+            public string? Name { get; set; }
+
+            [Query("CreationTime", Compare = ONE.Abp.Shared.QueryCompare.GreaterThanOrEqual)]
+            [Query(Compare = ONE.Abp.Shared.QueryCompare.Like)]
+            public DateTime? Start { get; set; }
+
+            [Query("CreationTime", Compare = ONE.Abp.Shared.QueryCompare.LessThan)]
+            public DateTime? End { get; set; }
+
+
+            [Query(Compare = ONE.Abp.Shared.QueryCompare.Equal, OrGroup = "cc")]
+            public int? Vaule { get; set; } 
+        }
+
+## **查询使用**
+
+    public async Task<PagedResult<SampleDto>> GetQueryAsync(SampleQueryInput input)
+    {
+        return await (await _repository.WithDetailsAsync()).ToPagedResultAsync<Sample,SampleDto>(input);
+    }
+
+> ToPagedResultAsync方法是IQueryable<>的静态扩展方法。
+
+> *注意：需要返回非实体类时，记得对象映射 CreateMap< Sample, SampleDto >();*
+
